@@ -52,10 +52,7 @@ public class NuguAir{
 	        this.destination_point = destination_pointObj.get("value").toString();
 	        this.origin_month = monthObj.get("value").toString();
 	        this.origin_day = dayObj.get("value").toString();
-	        
-	        month_zeroMapping(origin_month,null,null,trip_type1);
-	        day_zeroMapping(origin_day,null,null,trip_type1);
-	            
+	           
 		}catch(Exception e) {
 			
 			System.out.println("누구한테서 정보가 전부 안왔어요");
@@ -65,44 +62,73 @@ public class NuguAir{
 	   
 	}
 	//왕복일때
-		public int NUGU_requestParsing_round(JSONObject body) throws ParseException {
-			//json parser
-			JSONParser jsonParser = new JSONParser();
-			try {
-				//request parsing
-				JSONObject bodyObj = (JSONObject) jsonParser.parse(body.toString());
-				JSONObject actionObj = (JSONObject) jsonParser.parse(bodyObj.get("action").toString());
-				
-		        JSONObject parametersObj = (JSONObject) jsonParser.parse(actionObj.get("parameters").toString());
-		        JSONObject round_origin_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("round_origin_point").toString());
-		        JSONObject round_destination_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("round_destination_point").toString());
-		        JSONObject out_monthObj = (JSONObject) jsonParser.parse(parametersObj.get("out_month").toString());
-		        JSONObject out_dayObj = (JSONObject) jsonParser.parse(parametersObj.get("out_day").toString());
-		        JSONObject in_monthObj = (JSONObject) jsonParser.parse(parametersObj.get("in_month").toString());
-		        JSONObject in_dayObj = (JSONObject) jsonParser.parse(parametersObj.get("in_day").toString());
-		        
-		                
-		        this.round_origin_point = round_origin_pointObj.get("value").toString();
-		        this.round_destination_point = round_destination_pointObj.get("value").toString();
-		        this.out_month = out_monthObj.get("value").toString();
-		        this.out_day = out_dayObj.get("value").toString();
-		        this.in_month = in_monthObj.get("value").toString();
-		        this.in_day = in_dayObj.get("value").toString();
-		        
-		        month_zeroMapping(null,out_month,in_month ,trip_type2);
-		        day_zeroMapping(null,out_day,in_day ,trip_type2);
-		        System.out.println(actionObj);
-		        System.out.println("NUGU가 요청한 정보입니다:"+round_origin_point+","+round_destination_point+","+out_month+","+out_day+","+in_month+","+in_day);
-		      	
-		            
-			}catch(Exception e) {
-				
-				System.out.println("누구한테서 정보가 전부 안왔어요");
-			    return False;
-			}
-			return True;
-		   
+	public int NUGU_requestParsing_round(JSONObject body) throws ParseException {
+		//json parser
+		JSONParser jsonParser = new JSONParser();
+		try {
+			//request parsing
+			JSONObject bodyObj = (JSONObject) jsonParser.parse(body.toString());
+			JSONObject actionObj = (JSONObject) jsonParser.parse(bodyObj.get("action").toString());
+			
+	        JSONObject parametersObj = (JSONObject) jsonParser.parse(actionObj.get("parameters").toString());
+	        JSONObject round_origin_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("round_origin_point").toString());
+	        JSONObject round_destination_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("round_destination_point").toString());
+	        JSONObject out_monthObj = (JSONObject) jsonParser.parse(parametersObj.get("out_month").toString());
+	        JSONObject out_dayObj = (JSONObject) jsonParser.parse(parametersObj.get("out_day").toString());
+	        JSONObject in_monthObj = (JSONObject) jsonParser.parse(parametersObj.get("in_month").toString());
+	        JSONObject in_dayObj = (JSONObject) jsonParser.parse(parametersObj.get("in_day").toString());
+	        
+	                
+	        this.round_origin_point = round_origin_pointObj.get("value").toString();
+	        this.round_destination_point = round_destination_pointObj.get("value").toString();
+	        this.out_month = out_monthObj.get("value").toString();
+	        this.out_day = out_dayObj.get("value").toString();
+	        this.in_month = in_monthObj.get("value").toString();
+	        this.in_day = in_dayObj.get("value").toString();
+	        
+	        
+	        System.out.println(actionObj);
+	        System.out.println("NUGU가 요청한 정보입니다:"+round_origin_point+","+round_destination_point+","+out_month+","+out_day+","+in_month+","+in_day);
+	      	
+	            
+		}catch(Exception e) {
+			
+			System.out.println("누구한테서 정보가 전부 안왔어요");
+		    return False;
 		}
+		return True;
+	   
+	}
+	
+	//리뷰일때
+	public int NUGU_requestParsing_review(JSONObject body) throws ParseException {
+		//json parser
+		JSONParser jsonParser = new JSONParser();
+		try {
+			//request parsing
+			JSONObject bodyObj = (JSONObject) jsonParser.parse(body.toString());
+			JSONObject actionObj = (JSONObject) jsonParser.parse(bodyObj.get("action").toString());
+			
+	        JSONObject parametersObj = (JSONObject) jsonParser.parse(actionObj.get("parameters").toString());
+	        JSONObject review_origin_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("review_origin_point").toString());
+	        JSONObject review_destination_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("review_destination_point").toString());
+	        JSONObject review_monthObj = (JSONObject) jsonParser.parse(parametersObj.get("review_month").toString());
+	       	        
+	        System.out.println(actionObj);
+	        System.out.println("NUGU가 요청한 정보입니다:"+review_origin_pointObj.get("value")+","+review_destination_pointObj.get("value")+","+review_monthObj.get("value"));
+	      	        
+	        this.origin_point = review_origin_pointObj.get("value").toString();
+	        this.destination_point = review_destination_pointObj.get("value").toString();
+	        this.origin_month = review_monthObj.get("value").toString();
+	            
+		}catch(Exception e) {
+			
+			System.out.println("누구한테서 정보가 전부 안왔어요");
+		    return False;
+		}
+		return True;
+	   
+	}
 		
 		
 	//response to NUGU  (편도일때)
@@ -129,20 +155,56 @@ public class NuguAir{
 	//response to NUGU  (왕복일때)
 	@SuppressWarnings("unchecked")
 	public JSONObject NUGU_response_round(SkyScanner sky) {
+		
+		JSONObject key = new JSONObject();
+		JSONObject response =  new JSONObject();	
+		
+		key.put("destination", sky.getArr_PlaceName());
+		key.put("origin", sky.getDep_PlaceName());
+		key.put("origin_month", origin_month);
+		key.put("review_total_min_price", sky.getTotal_min_price());
+		key.put("carrierName", sky.getCarrierName());
+		key.put("via_inform", sky.getVia_inform());
+		
+		response.put("resultCode", "OK");
+		response.put("version", "2.0");
+		response.put("output", key);
+
+		return response;
+	}
+	//response to NUGU  (리뷰일때)
+	@SuppressWarnings("unchecked")
+	public JSONObject NUGU_response_review(SkyScanner sky) {
+		
+		JSONObject key = new JSONObject();
+		JSONObject response =  new JSONObject();
+		
+		key.put("R_review_destination_point", sky.getArr_PlaceName());
+		key.put("R_review_origin_point", sky.getDep_PlaceName());
+		key.put("R_review_month", origin_month);
+		key.put("R_review_total_min_price", sky.getReview_total_min_price());
+		key.put("R_review_total_max_price", sky.getReview_total_max_price());
+		key.put("R_review_total_average_price", sky.getReview_total_average_price());
+		key.put("R_review_total_min_day", sky.getReview_total_min_day());
+		key.put("R_review_total_max_day", sky.getReview_total_max_day());
+		
+		response.put("resultCode", "OK");
+		response.put("version", "2.0");
+		response.put("output", key);
+
+		return response;
+	
+	}
+	//예외 상황 응답 case1
+	public JSONObject NUGU_response_exception() {
 			
 		JSONObject key = new JSONObject();
 		JSONObject response =  new JSONObject();
 		
-		key.put("round_destination", sky.getArr_PlaceName());
-		key.put("round_origin", sky.getDep_PlaceName());
-		key.put("out_m", out_month);
-		key.put("out_d", out_day);
-		key.put("in_m", in_month);
-		key.put("in_d", in_day);
-		key.put("round_total_min_price", sky.getTotal_min_price());
-		key.put("round_via_inform", sky.getVia_inform());
+		key.put("date_fail", "날짜가 맞지 않네요.");
+
 		
-		response.put("resultCode", "OK");
+		response.put("resultCode", "date_fail");
 		response.put("version", "2.0");
 		response.put("output", key);
 
@@ -220,6 +282,19 @@ public class NuguAir{
 
 	public String getOrigin_day() {
 		return origin_day;
+	}
+	
+	public void setOrigin_point(String origin_point) {
+		this.origin_point = origin_point;
+	}
+	public void setDestination_point(String destination_point) {
+		this.destination_point = destination_point;
+	}
+	public void setOrigin_month(String origin_month) {
+		this.origin_month = origin_month;
+	}
+	public void setOrigin_day(String origin_day) {
+		this.origin_day = origin_day;
 	}
 	//왕복
 	public String getRound_origin_point() {
