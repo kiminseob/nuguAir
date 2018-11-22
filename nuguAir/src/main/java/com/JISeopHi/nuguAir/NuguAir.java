@@ -11,16 +11,27 @@ public class NuguAir{
 	//NUGU에서 요청한 값이 전부 들어있는지 여부 확인
 	private static final int True = 1;
 	private static final int False = -1;
-	    
-	//NUGU 변수
+	
+	//편도타입, 왕복타입
+	private static final String trip_type1 = "one-way";
+	private static final String trip_type2 = "return";
+	
+	//NUGU 변수 (편도)
 	public String origin_point;
 	public String destination_point;
     public String origin_month;
     public String origin_day;
     
+    //NUGU 변수 (왕복)
+    public String round_origin_point;
+	public String round_destination_point;
+    public String out_month;
+    public String out_day; 
+    public String in_month;
+    public String in_day;
    
-    //NUGU에서 요청한 request Parsing
-	public int NUGU_requestParsing(JSONObject body) throws ParseException {
+    //편도일때
+	public int NUGU_requestParsing_oneway(JSONObject body) throws ParseException {
 		//json parser
 		JSONParser jsonParser = new JSONParser();
 		try {
@@ -42,8 +53,8 @@ public class NuguAir{
 	        this.origin_month = monthObj.get("value").toString();
 	        this.origin_day = dayObj.get("value").toString();
 	        
-	        month_zeroMapping(origin_month);
-	        day_zeroMapping(origin_day);
+	        month_zeroMapping(origin_month,null,null,trip_type1);
+	        day_zeroMapping(origin_day,null,null,trip_type1);
 	            
 		}catch(Exception e) {
 			
@@ -53,9 +64,50 @@ public class NuguAir{
 		return True;
 	   
 	}
-	//response to NUGU
+	//왕복일때
+		public int NUGU_requestParsing_round(JSONObject body) throws ParseException {
+			//json parser
+			JSONParser jsonParser = new JSONParser();
+			try {
+				//request parsing
+				JSONObject bodyObj = (JSONObject) jsonParser.parse(body.toString());
+				JSONObject actionObj = (JSONObject) jsonParser.parse(bodyObj.get("action").toString());
+				
+		        JSONObject parametersObj = (JSONObject) jsonParser.parse(actionObj.get("parameters").toString());
+		        JSONObject round_origin_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("round_origin_point").toString());
+		        JSONObject round_destination_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("round_destination_point").toString());
+		        JSONObject out_monthObj = (JSONObject) jsonParser.parse(parametersObj.get("out_month").toString());
+		        JSONObject out_dayObj = (JSONObject) jsonParser.parse(parametersObj.get("out_day").toString());
+		        JSONObject in_monthObj = (JSONObject) jsonParser.parse(parametersObj.get("in_month").toString());
+		        JSONObject in_dayObj = (JSONObject) jsonParser.parse(parametersObj.get("in_day").toString());
+		        
+		                
+		        this.round_origin_point = round_origin_pointObj.get("value").toString();
+		        this.round_destination_point = round_destination_pointObj.get("value").toString();
+		        this.out_month = out_monthObj.get("value").toString();
+		        this.out_day = out_dayObj.get("value").toString();
+		        this.in_month = in_monthObj.get("value").toString();
+		        this.in_day = in_dayObj.get("value").toString();
+		        
+		        month_zeroMapping(null,out_month,in_month ,trip_type2);
+		        day_zeroMapping(null,out_day,in_day ,trip_type2);
+		        System.out.println(actionObj);
+		        System.out.println("NUGU가 요청한 정보입니다:"+round_origin_point+","+round_destination_point+","+out_month+","+out_day+","+in_month+","+in_day);
+		      	
+		            
+			}catch(Exception e) {
+				
+				System.out.println("누구한테서 정보가 전부 안왔어요");
+			    return False;
+			}
+			return True;
+		   
+		}
+		
+		
+	//response to NUGU  (편도일때)
 	@SuppressWarnings("unchecked")
-	public JSONObject NUGU_response(SkyScanner sky) {
+	public JSONObject NUGU_response_oneway(SkyScanner sky) {
 			
 		JSONObject key = new JSONObject();
 		JSONObject response =  new JSONObject();
@@ -74,27 +126,86 @@ public class NuguAir{
 
 		return response;
 	}
-	
-	// **   월 앞에 0 매핑 ** //
-	public void month_zeroMapping(String month) {
+	//response to NUGU  (왕복일때)
+	@SuppressWarnings("unchecked")
+	public JSONObject NUGU_response_round(SkyScanner sky) {
+			
+		JSONObject key = new JSONObject();
+		JSONObject response =  new JSONObject();
 		
-		int month_integer = Integer.parseInt(month);
-		if(month_integer<10) {
-			this.origin_month = "0"+month;
+		key.put("round_destination", sky.getArr_PlaceName());
+		key.put("round_origin", sky.getDep_PlaceName());
+		key.put("out_m", out_month);
+		key.put("out_d", out_day);
+		key.put("in_m", in_month);
+		key.put("in_d", in_day);
+		key.put("round_total_min_price", sky.getTotal_min_price());
+		key.put("round_via_inform", sky.getVia_inform());
+		
+		response.put("resultCode", "OK");
+		response.put("version", "2.0");
+		response.put("output", key);
+
+		return response;
+	}
+	// **   월 앞에 0 매핑 ** //
+	public void month_zeroMapping(String month, String out, String in, String type) {
+		
+		//편도
+		if(type.equals(trip_type1)) { 
+			int month_integer = Integer.parseInt(month);
+			if(month_integer<10) {
+				//편도
+				this.origin_month = "0"+month;
+			}
+		}
+		//왕복
+		else {
+			int in_integer = Integer.parseInt(in);
+			int out_integer = Integer.parseInt(out);
+			if(in_integer<10) {
+				
+				this.in_month = "0"+in;
+				System.out.println("in month"+in_month);
+			}
+			if(out_integer<10) {
+				
+				this.out_month = "0"+out;
+				System.out.println("out month"+out_month);
+			}
+			
 		}
 
 	}
 	// **   일 앞에 0 매핑 ** //
-	public void day_zeroMapping(String day) {
+	public void day_zeroMapping(String day, String out, String in, String type) {
 		
-		int day_integer = Integer.parseInt(day);
-		if(day_integer<10) {
-			this.origin_day = "0"+ day; 
+		//편도
+		if(type.equals(trip_type1)) { 
+			int day_integer = Integer.parseInt(day);
+			if(day_integer<10) {
+				this.origin_day = "0"+ day; 
+			}
 		}
-		
+		//왕복
+		else {
+			int in_integer = Integer.parseInt(in);
+			int out_integer = Integer.parseInt(out);
+			if(in_integer<10) {
+				
+				this.in_day = "0"+in;
+				System.out.println("in day"+in_day);
+			}
+			if(out_integer<10) {
+				
+				this.out_day = "0"+out;
+				System.out.println("out day"+out_day);
+			}
+		}
 			
 	}
-
+	
+	//편도 
 	public String getOrigin_point() {
 		return origin_point;
 	}
@@ -110,5 +221,24 @@ public class NuguAir{
 	public String getOrigin_day() {
 		return origin_day;
 	}
-
+	//왕복
+	public String getRound_origin_point() {
+		return round_origin_point;
+	}
+	public String getRound_destination_point() {
+		return round_destination_point;
+	}
+	public String getOut_month() {
+		return out_month;
+	}
+	public String getOut_day() {
+		return out_day;
+	}
+	public String getIn_month() {
+		return in_month;
+	}
+	public String getIn_day() {
+		return in_day;
+	}
+	
 }

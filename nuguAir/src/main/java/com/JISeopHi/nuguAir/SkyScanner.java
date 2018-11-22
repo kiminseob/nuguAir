@@ -14,6 +14,12 @@ import org.jsoup.nodes.Document;
 
 public class SkyScanner{
 	
+	//왕복일때
+	private static final String trip_type2 = "return";
+	public String inboundDate="";
+	public String return_date="";
+	
+	
 	//json parser
     public JSONParser jsonParser = new JSONParser();
 	//skyScanner 출발 코드
@@ -93,7 +99,7 @@ public class SkyScanner{
 	}
 	
 	//SkyScanner에 post요청을 통해 항공권 최저가 정보를 받아온다.
-	public void postRequest(String month, String day) throws IOException {
+	public void postRequest(String trip_type, String out_month, String out_day,String in_month, String in_day) throws IOException {
 		//request post 요청
         System.out.println("스카이스캐너에 post 요청합니다.");
 		String connUrl = "https://www.skyscanner.co.kr/g/conductor/v1/fps3/search/?"
@@ -125,14 +131,20 @@ public class SkyScanner{
 			cityToCity_mapping();
 		}
 		
+		//왕복일때
+		if(trip_type.equals(trip_type2)) {
+			inboundDate = "\"inboundDate\":\"2019-"+in_month+"-"+in_day+"\",";
+			return_date = "\"return_date\":\"2019-"+in_month+"-"+in_day+"\",";
+		}
 		
 		String payload = "{\"market\":\"KR\",\"currency\":\"KRW\",\"locale\":\"ko-KR\","
-				+ "\"cabin_class\":\"economy\",\"prefer_directs\":true,\"trip_type\":\"one-way\","
+				+ "\"cabin_class\":\"economy\",\"prefer_directs\":true,\"trip_type\":\""+trip_type+"\","
 				
 				+ "\"legs\":[{"
 				+ "\"origin\":\""+ dep_PlaceId+ "\","      //dep_PlaceId
 				+ "\"destination\":\""+ arr_PlaceId+ "\"," //arr_PlaceId
-				+ "\"date\":\"2018-"+month+"-"+day+"\"}],"
+				+ return_date
+				+ "\"date\":\"2019-"+out_month+"-"+out_day+"\"}],"
 				
 				+ "\"origin\":{"
 				+ "\"id\":\""+ dep_PlaceId +"\","        // dep_PlaceId
@@ -154,7 +166,8 @@ public class SkyScanner{
 				+ "\"type\":\""+arr_type+"\","    
 				+ "\"centroidCoordinates\":["+arr_Location[1]+","+arr_Location[0]+"]}," //arr_Location_swap
 				
-				+ "\"outboundDate\":\"2018-"+month+"-"+day+"\","
+				+ inboundDate
+				+ "\"outboundDate\":\"2019-"+out_month+"-"+out_day+"\","
 				+ "\"adults\":1,"
 				+ "\"child_ages\":[],"
 				
@@ -167,10 +180,8 @@ public class SkyScanner{
 				.headers(header)
 				.ignoreContentType(true)
 				.post();
-		
-		
 	}
-	
+
 	// 직항 최저가 파싱
 	public void direct_min_priceParsing(JSONObject stopsObj,JSONObject statsObj, JSONObject jsonObj) throws ParseException {
 		
