@@ -129,7 +129,36 @@ public class NuguAir{
 		return True;
 	   
 	}
-		
+	
+	//편도에서 월만 요청이 들어왔을 때
+	public int NUGU_requestParsing_oneway_month(JSONObject body) throws ParseException {
+		//json parser
+		JSONParser jsonParser = new JSONParser();
+		try {
+			//request parsing
+			JSONObject bodyObj = (JSONObject) jsonParser.parse(body.toString());
+			JSONObject actionObj = (JSONObject) jsonParser.parse(bodyObj.get("action").toString());
+			
+	        JSONObject parametersObj = (JSONObject) jsonParser.parse(actionObj.get("parameters").toString());
+	        JSONObject origin_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("origin_point").toString());
+	        JSONObject destination_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("destination_point").toString());
+	        JSONObject monthObj = (JSONObject) jsonParser.parse(parametersObj.get("month").toString());
+	       	        
+	        System.out.println(actionObj);
+	        System.out.println("NUGU가 요청한 정보입니다:"+origin_pointObj.get("value")+","+destination_pointObj.get("value")+","+monthObj.get("value"));
+	      	        
+	        this.origin_point = origin_pointObj.get("value").toString();
+	        this.destination_point = destination_pointObj.get("value").toString();
+	        this.origin_month = monthObj.get("value").toString();
+	            
+		}catch(Exception e) {
+			
+			System.out.println("누구한테서 정보가 전부 안왔어요");
+		    return False;
+		}
+		return True;
+	   
+	}	
 		
 	//response to NUGU  (편도일때)
 	@SuppressWarnings("unchecked")
@@ -142,9 +171,19 @@ public class NuguAir{
 		key.put("origin", sky.getDep_PlaceName());
 		key.put("origin_month", origin_month);
 		key.put("origin_day", origin_day);
-		key.put("total_min_price", sky.getTotal_min_price());
+		key.put("total_min_price", (int)Double.parseDouble(sky.getTotal_min_price()));
 		key.put("carrierName", sky.getCarrierName());
 		key.put("via_inform", sky.getVia_inform());
+		
+		//문자열 소수점 문제로 double로 파싱한다음에 int로 캐스팅 해서 문제 해결.
+		int diff_min = (int)Double.parseDouble(sky.getTotal_min_price());
+		int diff_average = sky.getReview_total_average_price();
+		if(diff_min < diff_average) {
+			key.put("oneway_ment", "이 날의 가격은 "+origin_month+"월 평균가보다 약 "+(diff_average-diff_min)/1000*1000+"원 정도 저렴하네요.");
+		}else {
+			key.put("oneway_ment", "이 날의 가격은 "+origin_month+"월 평균가보다 약 "+(diff_min - diff_average)/1000*1000+"원 정도 비싸네요.");
+		}
+		
 		
 		response.put("resultCode", "OK");
 		response.put("version", "2.0");
@@ -159,12 +198,14 @@ public class NuguAir{
 		JSONObject key = new JSONObject();
 		JSONObject response =  new JSONObject();	
 		
-		key.put("destination", sky.getArr_PlaceName());
-		key.put("origin", sky.getDep_PlaceName());
-		key.put("origin_month", origin_month);
-		key.put("review_total_min_price", sky.getTotal_min_price());
-		key.put("carrierName", sky.getCarrierName());
-		key.put("via_inform", sky.getVia_inform());
+		key.put("round_destination", sky.getArr_PlaceName());
+		key.put("round_origin", sky.getDep_PlaceName());
+		key.put("out_m", this.out_month);
+		key.put("out_d", this.out_day);
+		key.put("in_m", this.in_month);
+		key.put("in_d", this.in_day);
+		key.put("round_total_min_price", (int)Double.parseDouble(sky.getTotal_min_price()));
+		key.put("round_via_inform", sky.getVia_inform());
 		
 		response.put("resultCode", "OK");
 		response.put("version", "2.0");
@@ -187,6 +228,28 @@ public class NuguAir{
 		key.put("R_review_total_average_price", sky.getReview_total_average_price());
 		key.put("R_review_total_min_day", sky.getReview_total_min_day());
 		key.put("R_review_total_max_day", sky.getReview_total_max_day());
+		
+		response.put("resultCode", "OK");
+		response.put("version", "2.0");
+		response.put("output", key);
+
+		return response;
+	
+	}
+	//response to NUGU  (편도 월만 요청했을때)
+	@SuppressWarnings("unchecked")
+	public JSONObject NUGU_response_oneway_month(SkyScanner sky) {
+		
+		JSONObject key = new JSONObject();
+		JSONObject response =  new JSONObject();
+		
+		key.put("R_destination_point", sky.getArr_PlaceName());
+		key.put("R_origin_point", sky.getDep_PlaceName());
+		key.put("R_month", origin_month);
+		key.put("R_total_min_price", sky.getReview_total_min_price());
+		key.put("R_total_average_price", sky.getReview_total_average_price());
+		key.put("R_total_min_day", sky.getReview_total_min_day());
+		
 		
 		response.put("resultCode", "OK");
 		response.put("version", "2.0");
@@ -314,6 +377,24 @@ public class NuguAir{
 	}
 	public String getIn_day() {
 		return in_day;
+	}
+	public void setRound_origin_point(String round_origin_point) {
+		this.round_origin_point = round_origin_point;
+	}
+	public void setRound_destination_point(String round_destination_point) {
+		this.round_destination_point = round_destination_point;
+	}
+	public void setOut_month(String out_month) {
+		this.out_month = out_month;
+	}
+	public void setOut_day(String out_day) {
+		this.out_day = out_day;
+	}
+	public void setIn_month(String in_month) {
+		this.in_month = in_month;
+	}
+	public void setIn_day(String in_day) {
+		this.in_day = in_day;
 	}
 	
 }

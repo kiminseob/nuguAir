@@ -18,6 +18,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 
 public class SkyScanner{
+	private static final int MAX = 99999999;
 	
 	//왕복일때
 	private static final String trip_type2 = "return";
@@ -99,25 +100,38 @@ public class SkyScanner{
         JSONArray location_array = (JSONArray)jsonParser.parse(str_location);
         JSONObject locationObj = (JSONObject)jsonParser.parse(location_array.get(0).toString());
         String temp = locationObj.get("Location").toString();
-        
-        if(where.equals("도착")) {
-	        arr_PlaceId = locationObj.get("PlaceId").toString();
-	        arr_PlaceName = locationObj.get("PlaceName").toString();
-	        arr_CountryId = locationObj.get("CountryId").toString();
-	        arr_CityId = locationObj.get("CityId").toString();
-	        arr_CountryName = locationObj.get("CountryName").toString();
-	        arr_CityName = locationObj.get("CityName").toString();
-	        arr_Location = temp.split(",");
-	    }
-        else if(where.equals("출발")) {
-	        dep_PlaceId = locationObj.get("PlaceId").toString();
-	        dep_PlaceName = locationObj.get("PlaceName").toString();
-	        dep_CountryId = locationObj.get("CountryId").toString();
-	        dep_CityId = locationObj.get("CityId").toString();
-	        dep_CountryName = locationObj.get("CountryName").toString();
-	        dep_CityName = locationObj.get("CityName").toString();
-	        dep_Location = temp.split(",");
-	    }
+        try {
+	        if(where.equals("도착")) {
+		        arr_PlaceName = locationObj.get("PlaceName").toString();
+		        arr_CountryId = locationObj.get("CountryId").toString();
+		        arr_CityId = locationObj.get("CityId").toString();
+		        arr_CountryName = locationObj.get("CountryName").toString();
+		        arr_CityName = locationObj.get("CityName").toString();
+		        arr_Location = temp.split(",");
+		        arr_PlaceId = locationObj.get("PlaceId").toString();
+		    }
+	        else if(where.equals("출발")) {
+		        dep_PlaceName = locationObj.get("PlaceName").toString();
+		        dep_CountryId = locationObj.get("CountryId").toString();
+		        dep_CityId = locationObj.get("CityId").toString();
+		        dep_CountryName = locationObj.get("CountryName").toString();
+		        dep_CityName = locationObj.get("CityName").toString();
+		        dep_Location = temp.split(",");
+		        System.out.println(dep_PlaceName);
+		        dep_PlaceId = locationObj.get("PlaceId").toString();
+		    }
+        }catch(NullPointerException e){
+        	JSONObject airportInformationObj = (JSONObject)jsonParser.parse(locationObj.get("AirportInformation").toString());
+        	if(where.equals("도착")) {
+		        arr_PlaceId = airportInformationObj.get("PlaceId").toString();
+		        arr_PlaceName = airportInformationObj.get("PlaceName").toString();
+		    }
+	        else if(where.equals("출발")) {
+		        dep_PlaceId = airportInformationObj.get("PlaceId").toString();
+		        dep_PlaceName = airportInformationObj.get("PlaceName").toString();
+		    }
+        }
+        System.out.println(arr_PlaceId+dep_PlaceId);
 	}
 	
 	//SkyScanner에 post요청을 통해 항공권 최저가 정보를 받아온다.
@@ -216,7 +230,7 @@ public class SkyScanner{
 				+ "?profile=minimalmonthviewgridv2"
 				+ "&abvariant=FLUX_GDT2791_SendPriceTraceToMixpanel:b|rts_wta_shadowtraffic:b"
 				+ "&apikey=c32d1a225f454c49a44ddec56ddc6910";
-		System.out.println(connUrl);
+		
 		Document doc = Jsoup.connect(connUrl)
 				.ignoreContentType(true)
 				.header("user-agent", "Chrome/70.0.3538.102")
@@ -232,10 +246,10 @@ public class SkyScanner{
 		
 			ReviewdirectPrice_hashMap = new HashMap<Integer,Integer>();
 			ReviewindirectPrice_hashMap = new HashMap<Integer,Integer>();
-			int cnt=0;
+			
 			for(int i=0; i<grid.size(); i++) {
 				JSONObject gridObj = (JSONObject)grid.get(i);
-				cnt++;
+				
 				try {
 					//직항 price
 					JSONObject directOutbound =  (JSONObject)gridObj.get("DirectOutbound");
@@ -252,6 +266,7 @@ public class SkyScanner{
 					continue;
 				}
 			}
+			
 			treeMapSorting();
 			find_review_minPrice();
 			find_review_maxPrice();
@@ -261,7 +276,68 @@ public class SkyScanner{
 		}
 
 	}
-	
+	/*
+	// skyscanner에 특정 월의 캘린더 정보 요청
+		public void getRequestToCalendar_round(String out_year, String out_month, String in_year, String in_month, String in_day) throws IOException, ParseException {
+			
+			
+			String connUrl = "https://www.skyscanner.co.kr/g/browseservice/dataservices/browse/v3/mvweb/KR/KRW/ko-KR/calendar/"
+					+ ""+this.dep_PlaceId+"/"+this.arr_PlaceId+"/"+out_year+"-"+out_month+"/"+in_year+"-"+in_month+"/"
+					+ "?profile=minimalmonthviewgridv2"
+					+ "&abvariant=FLUX_GDT2791_SendPriceTraceToMixpanel:b|rts_wta_shadowtraffic:b"
+					+ "&apikey=c32d1a225f454c49a44ddec56ddc6910";
+			
+			Document doc = Jsoup.connect(connUrl)
+					.ignoreContentType(true)
+					.header("user-agent", "Chrome/70.0.3538.102")
+					.get();
+			
+			try {
+				String docString = doc.body().html().toString();
+				JSONObject jsonObj = (JSONObject) jsonParser.parse(docString);
+				JSONObject priceGridsObj = (JSONObject)jsonParser.parse(jsonObj.get("PriceGrids").toString());
+				JSONArray gridArray = (JSONArray)jsonParser.parse(priceGridsObj.get("Grid").toString());
+				//JSONArray grid = (JSONArray)gridArray.get(0);
+			
+			
+				ReviewdirectPrice_hashMap = new HashMap<Integer,Integer>();
+				ReviewindirectPrice_hashMap = new HashMap<Integer,Integer>();
+				
+				for(int i=0; i<gridArray.size(); i++) {
+					JSONObject gridObj = (JSONObject)gridArray.get(i);
+					JSONObject tempObj = (JSONObject)gridObj.get(Integer.parseInt(in_day));
+					JSONObject 			
+					String direct_state = tempObj.get("DirectOutboundAvailable").toString();
+					String indirect_state = tempObj.get("DirectInboundAvailable").toString();
+					if(direct_state.equals("false") && indirect)
+					
+						
+					try {
+						//직항 price
+						JSONObject directOutbound =  (JSONObject)gridObj.get("DirectOutbound");
+						ReviewdirectPrice_hashMap.put(Integer.parseInt(directOutbound.get("Price").toString()),i+1);
+					}catch(NullPointerException e){
+						continue;
+					}
+					
+					try {
+						//경유하는 경우 price
+						JSONObject indirectOutbound =  (JSONObject)gridObj.get("IndirectOutbound");
+						ReviewindirectPrice_hashMap.put(Integer.parseInt(indirectOutbound.get("Price").toString()),i+1);
+					}catch(NullPointerException e) {
+						continue;
+					}
+				}
+				
+				treeMapSorting();
+				find_review_minPrice();
+				find_review_maxPrice();
+				find_review_averagePrice();
+			}catch(NullPointerException e) {
+				System.out.println("리뷰에 대한 오류");
+			}
+
+		}*/
 	//트리맵 오름차순 정렬
 	public void treeMapSorting() {
 		
@@ -275,8 +351,12 @@ public class SkyScanner{
 	public void find_review_minPrice() {
 		
 		try {
-			int direct_min_price = direct_tm.firstKey();
-			int indirect_min_price = indirect_tm.firstKey();
+			
+			int direct_min_price=MAX;
+			int indirect_min_price=MAX;
+			
+			if(!direct_tm.isEmpty()) {	direct_min_price = direct_tm.firstKey(); }
+			if(!indirect_tm.isEmpty()) { indirect_min_price = indirect_tm.firstKey(); }
 		
 		
 			System.out.println("최저가 비교: "+ direct_min_price+","+ indirect_min_price);
@@ -296,9 +376,13 @@ public class SkyScanner{
 	//항공권 리뷰 최고가
 	public void find_review_maxPrice() {
 		try {
-			int direct_max_price = direct_tm.lastKey();
-			int indirect_max_price = indirect_tm.lastKey();
 			
+			int direct_max_price=0;
+			int indirect_max_price=0;
+			
+			if(!direct_tm.isEmpty()) {	direct_max_price = direct_tm.lastKey(); }
+			if(!indirect_tm.isEmpty()) { indirect_max_price = indirect_tm.lastKey(); }
+						
 			System.out.println("최고가 비교 : "+ direct_max_price+","+ indirect_max_price);
 			if(direct_max_price > indirect_max_price) {
 				this.review_total_max_price = direct_max_price;
@@ -351,16 +435,19 @@ public class SkyScanner{
 	// 직항 최저가 파싱
 	public void direct_min_priceParsing(JSONObject stopsObj,JSONObject statsObj, JSONObject jsonObj) throws ParseException {
 		
-		try {
+		label:try {
 			// 직항 최저가
 	        JSONObject directObj = (JSONObject)jsonParser.parse(stopsObj.get("direct").toString());
 	        JSONObject directTotalObj = (JSONObject)jsonParser.parse(directObj.get("total").toString());
 	        direct_min_price = directTotalObj.get("min_price").toString();
+	        System.out.println(direct_min_price);
 	        if(direct_min_price.equals(total_min_price)) {via_inform = "직항으로";}
+	        else {break label;}
 	        
 	        // carriers : 최저가의 항공사 이름을 찾기위한 dom
 	        JSONObject carriersObj = (JSONObject)jsonParser.parse(statsObj.get("carriers").toString());
 	        JSONArray single_carriersArray = (JSONArray)jsonParser.parse(carriersObj.get("single_carriers").toString());
+	        
 	        for(int i=0 ; i<single_carriersArray.size() ; i++){
 	            JSONObject tempObj = (JSONObject) single_carriersArray.get(i);
 	            
