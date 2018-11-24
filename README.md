@@ -85,10 +85,7 @@ public int NUGU_requestParsing_oneway(JSONObject body) throws ParseException {
       JSONObject destination_pointObj = (JSONObject) jsonParser.parse(parametersObj.get("destination_point").toString());
       JSONObject monthObj = (JSONObject) jsonParser.parse(parametersObj.get("month").toString());
       JSONObject dayObj = (JSONObject) jsonParser.parse(parametersObj.get("day").toString());
-
-      System.out.println(actionObj);
-      System.out.println("NUGU가 요청한 정보입니다:"+origin_pointObj.get("value")+","+destination_pointObj.get("value")+","+monthObj.get("value")+","+dayObj.get("value"));
-	      	        
+      
       this.origin_point = origin_pointObj.get("value").toString();
       this.destination_point = destination_pointObj.get("value").toString();
       this.origin_month = monthObj.get("value").toString();
@@ -128,7 +125,6 @@ public JSONObject NUGU_response_oneway(SkyScanner sky) {
       key.put("oneway_ment", "이 날의 가격은 "+origin_month+"월 평균가보다 약 "+(diff_min - diff_average)/1000*1000+"원 정도 비싸네요.");
     }
 
-
     response.put("resultCode", "OK");
     response.put("version", "2.0");
     response.put("output", key);
@@ -136,11 +132,11 @@ public JSONObject NUGU_response_oneway(SkyScanner sky) {
     return response;
 }
 ```
-3. SkyScanner
+2. SkyScanner
 
 - post, get 요청을 통해 각종 항공권 정보를 얻어옵니다.
 
-4. Calendar
+3. Calendar
 
 - 현재 날짜를 구합니다.
 ```
